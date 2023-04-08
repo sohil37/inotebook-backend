@@ -4,6 +4,7 @@ const User = require("../models/User");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const fetchUser = require("../middleware/fetchUser");
 const jwtSecret = "iNoteBook";
 
 // endpoint to create a new user
@@ -88,5 +89,16 @@ router.post(
     }
   }
 );
+
+// endpoint to get user
+router.post("/getUser", fetchUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password");
+    res.send(user);
+  } catch (err) {
+    res.status(500).send("Some error occured.");
+  }
+});
 
 module.exports = router;
