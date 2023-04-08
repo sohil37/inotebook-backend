@@ -47,4 +47,46 @@ router.post(
   }
 );
 
+// endpoint to login a user
+router.post(
+  "/login",
+  [
+    body("email", "enter a valid email.").isEmail(),
+    body("password", "enter a valid password.").isLength({ min: 8 }),
+  ],
+  async (req, res) => {
+    try {
+      // if any error in validation, return bad request
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      // check if user exist
+      let user = await User.findOne({ email: req.body.email });
+      if (!user) {
+        return res.status(400).json({
+          error: "Invalid credentials. Please try with correct credentials.",
+        });
+      }
+      // compare password
+      const isPassCorrect = bcrypt.compareSync(
+        req.body.password,
+        user.password
+      );
+
+      // create authToken
+      if (isPassCorrect) {
+        const data = { user: { id: user.id } };
+        const authToken = jwt.sign(data, jwtSecret);
+        res.json({ authToken });
+      } else
+        res.status(400).json({
+          error: "Invalid credentials. Please try with correct credentials.",
+        });
+    } catch (err) {
+      res.status(500).send("Some error occured.");
+    }
+  }
+);
+
 module.exports = router;
