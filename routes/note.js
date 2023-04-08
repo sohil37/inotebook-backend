@@ -77,10 +77,29 @@ router.put(
       );
       res.json(updatedNote);
     } catch (err) {
-      console.log(err);
       res.status(500).send("Some error occured.");
     }
   }
 );
+
+// endpoint to delete a note by logged in user
+router.delete("/deleteNote/:id", fetchUser, async (req, res) => {
+  try {
+    // check if note already exist
+    let note = await Note.findById(req.params.id);
+    if (!note) {
+      return res.status(404).send("Not found.");
+    }
+    // check if user is a valid user
+    if (note.user.toString() != req.user.id) {
+      return res.status(401).send("Not allowed");
+    }
+    // delete note
+    const deletedNote = await Note.findByIdAndDelete(req.params.id);
+    res.json({ success: "Note deleted successfully.", note: deletedNote });
+  } catch (err) {
+    res.status(500).send("Some error occured.");
+  }
+});
 
 module.exports = router;
