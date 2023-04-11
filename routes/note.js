@@ -6,12 +6,20 @@ const { body, validationResult } = require("express-validator");
 
 // endpoint to fetch all notes for a logged in user
 router.get("/fetchAllNotes", fetchUser, async (req, res) => {
-  const notes = await Note.find({ user: req.user.id });
-  res.json(notes);
+  let success = false;
+  try {
+    const notes = await Note.find({ user: req.user.id });
+    success = true;
+    res.json({ notes, success });
+  } catch (err) {
+    console.log(err);
+    success = false;
+    res.status(500).json({ error: "Some error occured.", success });
+  }
 });
 
 // endpoint to add notes by logged in user
-router.get(
+router.post(
   "/addNote",
   fetchUser,
   [
@@ -19,6 +27,7 @@ router.get(
     body("description", "enter a valid description.").isLength({ min: 5 }),
   ],
   async (req, res) => {
+    let success = false;
     try {
       const { title, description, tag } = req.body;
       const errors = validationResult(req);
@@ -32,9 +41,12 @@ router.get(
         user: req.user.id,
       });
       const savedNote = await note.save();
-      res.json(savedNote);
+      success = true;
+      res.json({ savedNote, success });
     } catch (err) {
-      res.status(500).send("Some error occured.");
+      console.log(err);
+      success = false;
+      res.status(500).json({ error: "Some error occured.", success });
     }
   }
 );
@@ -48,6 +60,7 @@ router.put(
     body("description", "enter a valid description.").isLength({ min: 5 }),
   ],
   async (req, res) => {
+    let success = false;
     try {
       // check if note already exist
       let note = await Note.findById(req.params.id);
@@ -75,9 +88,12 @@ router.put(
         { $set: newNote },
         { new: true }
       );
-      res.json(updatedNote);
+      success = true;
+      res.json({ updatedNote, success });
     } catch (err) {
-      res.status(500).send("Some error occured.");
+      console.log(err);
+      success = false;
+      res.status(500).json({ error: "Some error occured.", success });
     }
   }
 );
@@ -96,9 +112,12 @@ router.delete("/deleteNote/:id", fetchUser, async (req, res) => {
     }
     // delete note
     const deletedNote = await Note.findByIdAndDelete(req.params.id);
-    res.json({ success: "Note deleted successfully.", note: deletedNote });
+    success = true;
+    res.json({ success, note: deletedNote });
   } catch (err) {
-    res.status(500).send("Some error occured.");
+    console.log(err);
+    success = false;
+    res.status(500).json({ error: "Some error occured.", success });
   }
 });
 

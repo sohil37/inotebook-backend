@@ -16,6 +16,7 @@ router.post(
     body("password", "enter a valid password.").isLength({ min: 8 }),
   ],
   async (req, res) => {
+    let success = false;
     try {
       // if any error in validation, return bad request
       const errors = validationResult(req);
@@ -41,9 +42,12 @@ router.post(
       // create authToken
       const data = { user: { id: user.id } };
       const authToken = jwt.sign(data, jwtSecret);
-      res.json({ authToken });
+      success = true;
+      res.json({ authToken, success });
     } catch (err) {
-      res.status(500).send("Some error occured.");
+      console.log(err);
+      success = false;
+      res.status(500).json({ error: "Some error occured.", success });
     }
   }
 );
@@ -56,6 +60,7 @@ router.post(
     body("password", "enter a valid password.").isLength({ min: 8 }),
   ],
   async (req, res) => {
+    let success = false;
     try {
       // if any error in validation, return bad request
       const errors = validationResult(req);
@@ -79,25 +84,33 @@ router.post(
       if (isPassCorrect) {
         const data = { user: { id: user.id } };
         const authToken = jwt.sign(data, jwtSecret);
-        res.json({ authToken });
+        success = true;
+        res.json({ authToken, success });
       } else
         res.status(400).json({
           error: "Invalid credentials. Please try with correct credentials.",
+          success,
         });
     } catch (err) {
-      res.status(500).send("Some error occured.");
+      console.log(err);
+      success = false;
+      res.status(500).json({ error: "Some error occured.", success });
     }
   }
 );
 
 // endpoint to get user
 router.post("/getUser", fetchUser, async (req, res) => {
+  let success = false;
   try {
     const userId = req.user.id;
     const user = await User.findById(userId).select("-password");
-    res.send(user);
+    success = true;
+    res.json({ user, success });
   } catch (err) {
-    res.status(500).send("Some error occured.");
+    console.log(err);
+    success = false;
+    res.status(500).json({ error: "Some error occured.", success });
   }
 });
 
